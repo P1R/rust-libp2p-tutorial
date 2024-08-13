@@ -1,23 +1,23 @@
 use futures::prelude::*;
-use libp2p::swarm::SwarmEvent;
-use libp2p::{ping, Multiaddr};
-use std::error::Error;
-use std::time::Duration;
+use libp2p::{noise, ping, swarm::SwarmEvent, tcp, yamux, Multiaddr};
+use std::{error::Error, time::Duration};
 use tracing_subscriber::EnvFilter;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .try_init();
 
     let mut swarm = libp2p::SwarmBuilder::with_new_identity()
-        .with_async_std()
+        .with_tokio()
         .with_tcp(
-            libp2p::tcp::Config::default(),
-            libp2p::tls::Config::new,
-            libp2p::yamux::Config::default,
+            tcp::Config::default(),
+            noise::Config::new,
+            yamux::Config::default,
         )?
         .with_behaviour(|_| ping::Behaviour::default())?
-        .with_swarm_config(|cfg| cfg.with_idle_connection_timeout(Duration::from_secs(30))) // Allows us to observe pings for 30 seconds.
+        .with_swarm_config(|cfg| cfg.with_idle_connection_timeout(Duration::from_secs(u64::MAX)))
         .build();
 
     // Tell the swarm to listen on all interfaces and a random, OS-assigned
@@ -39,5 +39,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
             _ => {}
         }
     }
- 
 }
