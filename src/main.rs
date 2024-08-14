@@ -1,6 +1,6 @@
 use std::error::Error;
-use libp2p::{noise, tcp, yamux};
 use tracing_subscriber::EnvFilter;
+use libp2p::{noise, ping, tcp, yamux};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -14,7 +14,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             tcp::Config::default(),
             noise::Config::new,
             yamux::Config::default,
-        )?;
+        )?
+        .with_behaviour(|_| ping::Behaviour::default())?;
 
     Ok(())
 }
