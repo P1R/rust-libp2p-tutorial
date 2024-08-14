@@ -1,6 +1,7 @@
 use std::{error::Error, time::Duration};
 use tracing_subscriber::EnvFilter;
-use libp2p::{noise, ping, tcp, yamux, Multiaddr};
+use libp2p::{noise, ping, tcp, yamux, Multiaddr, swarm::SwarmEvent};
+use futures::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -31,5 +32,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         println!("Dialed {addr}")
     }
 
-    Ok(())
+    loop {
+        match swarm.select_next_some().await {
+            SwarmEvent::NewListenAddr { address, .. } => println!("Listening on {address:?}"),
+            SwarmEvent::Behaviour(event) => println!("{event:?}"),
+            _ => {}
+        }
+    }
 }
